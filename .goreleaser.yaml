@@ -30,6 +30,7 @@ brews:
     repository:
       owner: edihasaj
       name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     homepage: "https://github.com/edihasaj/shipyard"
     description: "Point an agent at a repo + task and run an end-to-end ship pipeline"
     license: "MIT"

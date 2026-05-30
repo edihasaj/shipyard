@@ -1,0 +1,34 @@
+name: release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write   # create the GitHub Release + upload archives
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # goreleaser needs full history + tags
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+          cache: true
+      - name: test before release
+        run: go test ./...
+      - uses: goreleaser/goreleaser-action@v6
+        with:
+          # pinned to the version validated locally; `brews` is deprecated but
+          # works here. homebrew_casks is Pro-only, so don't auto-upgrade past
+          # a goreleaser that removes `brews`.
+          version: '2.12.7'
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Pushes the generated formula to edihasaj/homebrew-tap.
+          # Add a repo secret TAP_GITHUB_TOKEN (PAT with repo scope on homebrew-tap).
+          HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}

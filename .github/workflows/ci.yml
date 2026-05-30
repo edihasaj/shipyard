@@ -1,0 +1,33 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+          cache: true
+      - name: vet
+        run: go vet ./...
+      - name: build
+        run: go build -ldflags "-s -w" -o shipyard .
+      - name: test
+        run: go test -race ./...
+      - name: smoke (binary runs + self-isolates config home)
+        run: |
+          export SHIPYARD_HOME="$RUNNER_TEMP/sy"
+          ./shipyard --version
+          ./shipyard where
+          ./shipyard list   # empty home -> friendly message, exit 0
+          ./shipyard init demo
+          ./shipyard list | grep -qx demo
