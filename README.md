@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/shipyard-hero.png" alt="shipyard — point an agent at a repo and a task, get a PR-ready branch back" width="100%">
+</p>
+
 # shipyard
 
 **Point an agent at a repo + a task. Get a PR-ready branch back.**
