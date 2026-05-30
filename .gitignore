@@ -1,0 +1,13 @@
+# build output
+/shipyard
+/dist/
+*.test
+*.out
+
+# os / editor
+.DS_Store
+.idea/
+.vscode/
+
+# IMPORTANT: shipyard never ships user configs. Real repo configs live in the
+# user's config home (~/.config/shipyard/repos), NOT in this repo.

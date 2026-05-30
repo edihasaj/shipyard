@@ -1,0 +1,40 @@
+# Example: a full-control GitHub repo (Node/TS). Copy into your config home,
+# rename to the repo key, edit. This file is illustrative only.
+key: web-app
+path: ~/code/web-app
+
+task_source: github
+github:
+  repo: acme/web-app
+
+base_branch: main
+branch_format: "{type}/{slug}"
+branch_types:
+  feature: feat
+  bug: fix
+  chore: chore
+branch_examples:
+  - feat/add-csv-export
+  - fix/null-totals-crash
+
+commit_convention: conventional
+
+gates:
+  install: "pnpm install"
+  lint: "pnpm lint"
+  typecheck: "tsc --noEmit"
+  test: "pnpm test"
+  test_scoped: ""
+
+review:
+  security: true
+  level: high
+
+pr:
+  base: main
+  draft: false
+  template: ""
+
+push: ask
+test_strategy: ""
+notes: "Conventional commits; follow the repo's CLAUDE.md if present."

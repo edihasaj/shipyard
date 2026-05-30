@@ -1,0 +1,50 @@
+# <repo>.yml — per-repo config for the shipyard pipeline.
+# Copy this file, rename to the repo key, fill in. The ship-task skill reads it.
+# Keep it boring and explicit; it IS the contract.
+
+key: example                       # filename without .yml; what you pass to shipyard
+path: ~/code/example               # repo root (the CWD the pipeline uses)
+
+task_source: github               # jira | github | none (free-text)
+jira:
+  project_key: ABC                # only for task_source: jira (e.g. DEVO)
+github:
+  repo: owner/example             # only for task_source: github
+
+base_branch: main                 # branch new work forks from + targets
+branch_format: "{type}/{key}-{slug}"  # tokens: {type} {key} {slug}
+branch_types:                     # map task type -> {type} token
+  feature: feature
+  bug: bug
+  chore: chore
+branch_examples:                  # the agent matches these exactly
+  - feature/ABC-123-add-export-button
+  - bug/ABC-456-fix-null-totals
+
+commit_convention: conventional   # conventional | jira-prefixed | plain
+                                  # conventional  => "feat(scope): msg"
+                                  # jira-prefixed => "ABC-123 msg"
+
+gates:
+  install: ""                     # e.g. "pnpm install" / "uv sync" / "dotnet tool restore"
+  lint: ""                        # e.g. "eslint ." / "ruff check"
+  typecheck: ""                   # e.g. "tsc --noEmit" / "pyright"
+  test: ""                        # e.g. "npm test" / "uv run pytest"
+  test_scoped: ""                 # faster subset for the inner loop (optional)
+
+review:
+  security: true                  # always run a security review on the diff
+  level: high                     # code-review effort: low | medium | high | max
+
+pr:
+  base: main                      # PR target branch (usually == base_branch)
+  draft: false
+  template: ""                    # path to a PR md template, or "" for default
+
+push: ask                         # manual | pr | ask
+                                  # manual => stop PR-ready, never push (enterprise)
+                                  # pr     => push + open PR automatically
+                                  # ask    => summarize, then ask
+
+test_strategy: ""                 # "" or a free-form local smoke strategy
+notes: ""                         # anything repo-specific the agent should know

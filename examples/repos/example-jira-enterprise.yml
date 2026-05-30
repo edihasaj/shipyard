@@ -1,0 +1,46 @@
+# Example: an enterprise repo where you DON'T auto-push. Tasks come from Jira;
+# the pipeline stops PR-ready and you push by hand. Illustrative only.
+key: enterprise-app
+path: ~/code/enterprise-app
+
+task_source: jira
+jira:
+  project_key: DEVO
+github:
+  repo: bigco/enterprise-app   # where PRs land, even though tasks are in Jira
+
+base_branch: develop
+branch_format: "{type}/{key}-{slug}"
+branch_types:
+  feature: feature
+  bug: bug
+  chore: chore
+branch_examples:
+  - feature/DEVO-25443-add-warning-alerts
+  - bug/DEVO-25915-fix-attach-unit
+
+commit_convention: plain        # a commit-msg hook may prepend the ticket key
+
+gates:
+  install: "npm ci"
+  lint: "npx eslint ."
+  typecheck: ""
+  test: "npm test"
+  test_scoped: "npm run test:smoke"
+
+review:
+  security: true
+  level: high
+
+pr:
+  base: develop
+  draft: true
+  template: ""
+
+push: manual                    # <<< never auto-push; stop PR-ready, hand back
+
+test_strategy: ""
+notes: >-
+  Enterprise: full control NOT assumed. Fetch the Jira task, branch in the
+  exact format, implement, gate, review, write the PR body to /tmp, and STOP.
+  Respect husky/pre-commit hooks; never use --no-verify.
