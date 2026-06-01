@@ -108,10 +108,23 @@ Apply fixes. Re-run gates if you changed logic.
 
 ## Step 8 — PR description
 
-Write to `/tmp/<key-or-slug>-pr.md` using `pr.template` (or a default:
-**Summary / Changes / Testing / Risk / Linked task**). Match how the team
-writes PRs here (`gh pr list --state merged --limit 3` + `gh pr view`).
-Include the task link.
+Write to `/tmp/<key-or-slug>-pr.md`. Source the skeleton from `pr.template`:
+
+- **Unset (`""`)** → use the default **Summary / Changes / Testing / Risk /
+  Linked task** and match how the team writes PRs here
+  (`gh pr list --state merged --limit 3` + `gh pr view`).
+- **Filesystem path** (expand a leading `~`) → read that file.
+- **Obsidian URL** — `obsidian://open?vault=<v>&file=<note>` → read it with
+  `obsidian read path="<note>.md" vault=<v>` (note may include subfolders;
+  append `.md` if absent). If the `obsidian` CLI is missing, fall back to the
+  vault file path; if still unresolved, STOP and say so — don't silently use
+  the default.
+
+When a template is provided, **preserve its structure verbatim** — keep every
+header, comment, and checklist line as-is — and only fill in the prose
+placeholders (the `_italic prompts_`) and obvious tokens (e.g. `<TICKET-ID>`)
+from the resolved task. Leave checkboxes unchecked for the human. Always
+include the task link.
 
 ## Step 9 — Local test (optional, per config)
 

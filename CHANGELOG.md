@@ -6,7 +6,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-06-01
+
 ### Added
+- Custom PR templates via `pr.template`: accepts a filesystem path or an
+  Obsidian URL (`obsidian://open?vault=<v>&file=<note>`, resolved with the
+  `obsidian` CLI). When set, the pipeline fills the template's prose
+  placeholders and tokens while preserving headers and review checklists
+  verbatim; unset keeps the built-in default skeleton.
 - Per-agent invocation profiles (`internal/agent`): `claude` (default, slash
   command), `codex`, and `generic`. Non-Claude agents get the pipeline inlined
   in the prompt, so `$SHIPYARD_AGENT` works without a per-agent skill install.
@@ -15,7 +22,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Community health files: issue templates, PR template, `SECURITY.md`,
   `CHANGELOG.md`, README badges.
 
-## [0.1.0] - TBD
+## [0.1.0] - 2026-06-01
 
 First public release.
 
@@ -30,5 +37,6 @@ First public release.
 - CI (vet/build/test -race/smoke) and a goreleaser release pipeline
   (darwin/linux, amd64/arm64) with a Homebrew tap formula.
 
-[Unreleased]: https://github.com/edihasaj/shipyard/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/edihasaj/shipyard/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/edihasaj/shipyard/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/edihasaj/shipyard/releases/tag/v0.1.0

@@ -103,6 +103,24 @@ push: ask              # manual | pr | ask
 See [`internal/assets/schema/_schema.yml`](internal/assets/schema/_schema.yml)
 for every field, documented.
 
+### Custom PR templates (incl. Obsidian)
+
+`pr.template` controls the PR body skeleton. Leave it `""` for the built-in
+default (Summary / Changes / Testing / Risk / Linked task), or point it at your
+team's template so every PR matches house style:
+
+```yaml
+pr:
+  template: ~/templates/pr.md                                  # a file path
+  # template: "obsidian://open?vault=main&file=Team/pr-template" # an Obsidian note
+```
+
+When set, the pipeline reads that template and fills in only the prose
+placeholders and obvious tokens (e.g. `<TICKET-ID>`) — headers, comments, and
+review checklists are preserved verbatim. Obsidian URLs are resolved with the
+`obsidian` CLI (`obsidian read path="<note>.md" vault=<v>`), so you can keep a
+PR template in your vault and reference it by URL.
+
 ## Use
 
 ```sh

@@ -39,7 +39,12 @@ review:
 pr:
   base: main                      # PR target branch (usually == base_branch)
   draft: false
-  template: ""                    # path to a PR md template, or "" for default
+  template: ""                    # PR body template, or "" for default skeleton.
+                                  # accepts: a filesystem path (~ expanded), OR an
+                                  # Obsidian URL — obsidian://open?vault=<v>&file=<note>
+                                  # (read via `obsidian read path="<note>.md" vault=<v>`).
+                                  # when set, the skill fills THAT template's sections
+                                  # verbatim (headers, checklists) instead of the default.
 
 push: ask                         # manual | pr | ask
                                   # manual => stop PR-ready, never push (enterprise)
