@@ -4,6 +4,11 @@
 
 # shipyard
 
+[![CI](https://github.com/edihasaj/shipyard/actions/workflows/ci.yml/badge.svg)](https://github.com/edihasaj/shipyard/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/edihasaj/shipyard?sort=semver)](https://github.com/edihasaj/shipyard/releases)
+[![Go Reference](https://pkg.go.dev/badge/github.com/edihasaj/shipyard.svg)](https://pkg.go.dev/github.com/edihasaj/shipyard)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 **Point an agent at a repo + a task. Get a PR-ready branch back.**
 
 shipyard runs a per-task pipeline against any repo you've configured, so you
@@ -35,6 +40,32 @@ shipyard install-skill
 
 shipyard shells out to an agent CLI (default `claude`; override with
 `$SHIPYARD_AGENT` or `--agent`).
+
+### shipyard is a launcher, not an LLM client
+
+shipyard contains **no model API calls** and no API key. It resolves your repo
+config, builds the task prompt, and execs an agent CLI — the agent does the
+thinking. The pipeline itself is the bundled `ship-task` skill (`SKILL.md`).
+This keeps shipyard thin and lets it ride your agent's existing tools (`gh`,
+`git`, MCP, `/security-review`, `/code-review`), repo context, and permission
+model instead of reimplementing them.
+
+### Agents
+
+Each agent has an **invocation profile** (how shipyard renders the prompt and
+builds argv). Pick it with `--agent-profile` or `$SHIPYARD_AGENT_PROFILE`;
+otherwise it's inferred from the agent binary name.
+
+| Profile | Agent | How the task is delivered |
+|---|---|---|
+| `claude` *(default)* | Claude Code | `/ship-task` slash command (runs the installed skill) |
+| `codex` | OpenAI Codex CLI | pipeline inlined in the prompt; `codex exec` when headless |
+| `generic` | any other CLI | pipeline inlined in the prompt; passed as one positional arg |
+
+Skill-aware agents (Claude Code) use the installed skill; others receive the
+full pipeline inlined in the prompt, so they don't need a separate install
+step. Add an agent by adding a profile in `internal/agent` — no launch-path
+changes.
 
 ## Configure a repo
 
@@ -95,7 +126,7 @@ Or, inside an agent session already in the repo: `/ship-task my-app ABC-123`.
 
 | Command | What |
 |---|---|
-| `shipyard <repo> <task>` | run the pipeline (`-p`/`--print` for headless) |
+| `shipyard <repo> <task>` | run the pipeline (`-p`/`--print` for headless; `--agent`/`--agent-profile` to pick the agent) |
 | `shipyard list` | list configured repos |
 | `shipyard init <repo>` | scaffold a config from the schema |
 | `shipyard install-skill` | install the ship-task skill for the agent |

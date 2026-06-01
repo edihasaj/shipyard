@@ -54,13 +54,25 @@ func setupHome(t *testing.T) (string, string) {
 	return home, repo
 }
 
+// run drives shipyard with the claude profile pinned, so the fake agent (whose
+// name doesn't match a built-in profile) still receives the "/ship-task …"
+// slash command rather than the generic inlined-skill prompt.
 func run(t *testing.T, bin, home, agent string, args ...string) (string, error) {
 	t.Helper()
+	return runProfile(t, bin, home, agent, "claude", args...)
+}
+
+func runProfile(t *testing.T, bin, home, agent, profile string, args ...string) (string, error) {
+	t.Helper()
 	cmd := exec.Command(bin, args...)
-	cmd.Env = append(os.Environ(),
+	env := append(os.Environ(),
 		"SHIPYARD_HOME="+home,
 		"SHIPYARD_AGENT="+agent,
 	)
+	if profile != "" {
+		env = append(env, "SHIPYARD_AGENT_PROFILE="+profile)
+	}
+	cmd.Env = env
 	out, err := cmd.CombinedOutput()
 	return string(out), err
 }
@@ -113,6 +125,51 @@ func TestHeadlessFlag(t *testing.T) {
 	if !strings.Contains(s, "-p") || !strings.Contains(s, "acceptEdits") {
 		t.Errorf("headless flags not forwarded:\n%s", s)
 	}
+}
+
+// Non-claude agents have no ship-task skill, so the generic profile must inline
+// the whole pipeline (SKILL.md) plus the task inputs into the prompt.
+func TestGenericProfileInlinesSkill(t *testing.T) {
+	bin := buildBinary(t)
+	home, _ := setupHome(t)
+	log := filepath.Join(t.TempDir(), "agent.log")
+	agent := fakeAgent(t, log)
+
+	if _, err := runProfile(t, bin, home, agent, "generic", "testrepo", "fix bug"); err != nil {
+		t.Fatalf("run failed: %v", err)
+	}
+	s := readFile(t, log)
+	if !strings.Contains(s, "point-and-ship pipeline") {
+		t.Errorf("generic profile did not inline SKILL.md:\n%s", s)
+	}
+	if !strings.Contains(s, "Inputs") || !strings.Contains(s, "testrepo fix bug") {
+		t.Errorf("generic profile did not append inputs:\n%s", s)
+	}
+}
+
+// codex uses `codex exec <prompt>` in headless mode.
+func TestCodexHeadless(t *testing.T) {
+	bin := buildBinary(t)
+	home, _ := setupHome(t)
+	log := filepath.Join(t.TempDir(), "agent.log")
+	agent := fakeAgent(t, log)
+
+	if _, err := runProfile(t, bin, home, agent, "codex", "-p", "testrepo", "fix bug"); err != nil {
+		t.Fatalf("run failed: %v", err)
+	}
+	s := readFile(t, log)
+	if !strings.Contains(s, "ARGS=exec ") {
+		t.Errorf("codex headless did not use `exec`:\n%s", s)
+	}
+}
+
+func readFile(t *testing.T, p string) string {
+	t.Helper()
+	b, err := os.ReadFile(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(b)
 }
 
 func TestUnknownRepoFails(t *testing.T) {

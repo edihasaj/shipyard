@@ -4,16 +4,19 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
+	"github.com/edihasaj/shipyard/internal/agent"
 	"github.com/edihasaj/shipyard/internal/config"
 	"github.com/spf13/cobra"
 )
 
 var (
-	flagHeadless bool
-	flagPrint    bool
-	flagAgent    string
+	flagHeadless     bool
+	flagPrint        bool
+	flagAgent        string
+	flagAgentProfile string
 )
 
 func runShip(cmd *cobra.Command, args []string) error {
@@ -58,19 +61,37 @@ func runShip(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("repo path missing or not a dir: %s", repoPath)
 	}
 
-	prompt := strings.TrimSpace(fmt.Sprintf("/ship-task %s %s %s", repoKey, task, notes))
-
 	agentBin := flagAgent
 	if agentBin == "" {
 		agentBin = envOr("SHIPYARD_AGENT", "claude")
 	}
 
-	fmt.Fprintf(os.Stderr, "▶ shipyard: %s  task=%s  (%s)\n", repoKey, orNone(task), repoPath)
-
-	cmdArgs := []string{prompt}
-	if flagHeadless || flagPrint {
-		cmdArgs = []string{"-p", prompt, "--permission-mode", "acceptEdits"}
+	// Pick the invocation profile: explicit flag/env wins, else infer from the
+	// agent binary name (falling back to a generic positional-prompt profile).
+	prof := agent.ProfileFor(agentBin)
+	if name := flagAgentProfile; name == "" {
+		name = os.Getenv("SHIPYARD_AGENT_PROFILE")
+		if name != "" {
+			flagAgentProfile = name
+		}
 	}
+	if flagAgentProfile != "" {
+		p, ok := agent.ProfileByName(flagAgentProfile)
+		if !ok {
+			fmt.Fprintf(os.Stderr, "shipyard: unknown agent profile %q; using %q (known: %s)\n",
+				flagAgentProfile, p.Name, strings.Join(agent.Names(), ", "))
+		}
+		prof = p
+	}
+
+	taskArgs := strings.Join(strings.Fields(repoKey+" "+task+" "+notes), " ")
+	prompt := prof.Prompt(taskArgs)
+	print := flagHeadless || flagPrint
+
+	fmt.Fprintf(os.Stderr, "▶ shipyard: %s  task=%s  agent=%s/%s  (%s)\n",
+		repoKey, orNone(task), filepath.Base(agentBin), prof.Name, repoPath)
+
+	cmdArgs := prof.Argv(prompt, print)
 
 	c := exec.Command(agentBin, cmdArgs...)
 	c.Dir = repoPath
@@ -88,6 +109,7 @@ func bindShipFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(&flagPrint, "print", "p", false, "headless/print mode (non-interactive)")
 	cmd.Flags().BoolVar(&flagHeadless, "headless", false, "alias for --print")
 	cmd.Flags().StringVar(&flagAgent, "agent", "", "agent binary to invoke (default: $SHIPYARD_AGENT or 'claude')")
+	cmd.Flags().StringVar(&flagAgentProfile, "agent-profile", "", "invocation profile: claude|codex|generic (default: inferred from --agent; or $SHIPYARD_AGENT_PROFILE)")
 }
 
 func envOr(k, def string) string {
