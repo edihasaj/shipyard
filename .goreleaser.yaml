@@ -27,6 +27,9 @@ checksum:
 
 brews:
   - name: shipyard
+    # Homebrew only discovers tap formulae under Formula/ (a bare repo-root
+    # .rb is ignored), so commit there explicitly.
+    directory: Formula
     repository:
       owner: edihasaj
       name: homebrew-tap
