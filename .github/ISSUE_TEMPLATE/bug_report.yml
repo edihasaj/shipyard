@@ -1,0 +1,41 @@
+name: Bug report
+description: Something in the shipyard CLI or skill misbehaves.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you ran and what went wrong.
+      placeholder: |
+        $ shipyard my-app "add CSV export"
+        ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: shipyard version
+      description: Output of `shipyard --version`.
+    validations:
+      required: true
+  - type: input
+    id: agent
+    attributes:
+      label: Agent CLI
+      description: Which agent + version ($SHIPYARD_AGENT, default `claude`).
+    validations:
+      required: false
+  - type: input
+    id: os
+    attributes:
+      label: OS / arch
+      placeholder: macOS 15 arm64 / Ubuntu 24.04 amd64
+    validations:
+      required: true

@@ -1,0 +1,29 @@
+name: Feature request
+description: Suggest an improvement to the CLI, config schema, or skill pipeline.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do that shipyard makes hard today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+    validations:
+      required: false
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - CLI (launcher / flags / config)
+        - Config schema
+        - Skill pipeline (SKILL.md)
+        - Release / packaging
+        - Docs
+    validations:
+      required: true
