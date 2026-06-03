@@ -9,6 +9,10 @@ jira:
 github:
   repo: bigco/enterprise-app   # where PRs land, even though tasks are in Jira
 
+ticket:
+  template: ""                 # built-in default; or a path / Obsidian URL to your
+                               # team's ticket skeleton (Ask / Description / AC)
+
 base_branch: develop
 branch_format: "{type}/{key}-{slug}"
 branch_types:
