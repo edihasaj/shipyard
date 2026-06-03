@@ -82,6 +82,11 @@ has the published version.
 
 Keep section headings small (`###`, not `##`) so the ticket body doesn't shout.
 
+You may also update the **title/summary** in the same edit — it's a plain-text
+field (no ADF). When a spike concludes, drop the `Spike - ` prefix and retitle
+to the implementation outcome (e.g. _"Run parallel test harness as per-case
+NUnit tests"_).
+
 **Acceptance criteria go in their own fields, not the description.** If the
 tracker exposes dedicated acceptance-criteria fields, write the criteria there
 and leave them out of the description body:
