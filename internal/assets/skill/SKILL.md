@@ -39,9 +39,10 @@ if nothing matches, STOP and ask, and offer to scaffold one (`shipyard init`).
 
 ## Step 0 — Load config (always first)
 
-Read the repo's config YAML. It defines: `path`, `task_source`, `base_branch`,
-`branch_format`, `branch_types`, `commit_convention`, `gates`, `review`, `pr`,
-`push`, `test_strategy`, `notes`. Everything below is parameterized by it.
+Read the repo's config YAML. It defines: `path`, `task_source`, `ticket`,
+`base_branch`, `branch_format`, `branch_types`, `commit_convention`, `gates`,
+`review`, `pr`, `push`, `test_strategy`, `notes`. Everything below is
+parameterized by it.
 `cd` into `path`. Run `git status --short --branch`; if dirty and not on the
 base branch, STOP and ask.
 
@@ -60,6 +61,43 @@ base branch, STOP and ask.
 
 Restate the task in 2–3 lines: what + acceptance criteria + type
 (feature/bug/chore). This drives branch type and commit type.
+
+### Drafting or updating a ticket body
+
+When the task is to **create or update a ticket's description** (a thin task
+that needs fleshing out, or normalizing an existing one) rather than implement
+code, source the skeleton from `ticket.template` — resolved exactly like
+`pr.template` (see Step 8: `""` → built-in default; filesystem path; or Obsidian
+URL). Preserve the template's structure verbatim and fill only the prose
+placeholders and obvious tokens from the resolved task. Write the body to the
+ticket via the task source (Jira/GitHub integration), and echo it back.
+
+Keep section headings small (`###`, not `##`) so the ticket body doesn't shout.
+
+**Acceptance criteria go in their own fields, not the description.** If the
+tracker exposes dedicated acceptance-criteria fields, write the criteria there
+and leave them out of the description body:
+
+- Discover field ids from the issue metadata (Jira: `getJiraIssue` with
+  `expand=names`, or editmeta). Match by display name — e.g. _End User
+  Acceptance Criteria_ and _PR Acceptance Criteria_, or a generic _Acceptance
+  Criteria_.
+- Rich-text custom fields take **ADF**, not markdown — send the value as an
+  Atlassian Document (a `doc` with a `bulletList`), in a separate update from
+  the markdown `description` (one editJiraIssue call can't mix formats).
+- Only if no such field exists, fall back to appending the criteria as
+  description sections.
+
+The built-in default (when `ticket.template` is `""`) — description body:
+
+- **Status** — _optional: readiness + any blocking dependency (PR/commit/ticket); delete if N/A._
+- **Ask** — _one paragraph: the outcome this ticket delivers._
+- **Description** — _**Background** (domain/data/constraint); **Already in place — do not redo** (what existing code/spikes deliver, with file/line pointers); **Remaining scope** (concrete named work items, each with where it lives + the check that proves it)._
+- **Out of scope** — _what this ticket explicitly does not cover._
+
+…plus, into their dedicated tracker fields: **End-user acceptance criteria**
+(observable behaviour, no implementation detail) and **PR acceptance criteria**
+(verifiable deliverables — tests, docs, behaviour — the PR must show).
 
 ## Step 2 — Plan (read before write)
 

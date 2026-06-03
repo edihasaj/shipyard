@@ -11,6 +11,15 @@ jira:
 github:
   repo: owner/example             # only for task_source: github
 
+ticket:
+  template: ""                    # issue/ticket body template, or "" for default skeleton.
+                                  # used whenever the pipeline drafts or updates a ticket
+                                  # description (e.g. fleshing out a thin task). same
+                                  # resolution as pr.template: a filesystem path (~ expanded),
+                                  # OR an Obsidian URL — obsidian://open?vault=<v>&file=<note>.
+                                  # when set, the skill fills THAT template's sections
+                                  # verbatim instead of the built-in default.
+
 base_branch: main                 # branch new work forks from + targets
 branch_format: "{type}/{key}-{slug}"  # tokens: {type} {key} {slug}
 branch_types:                     # map task type -> {type} token
