@@ -72,6 +72,14 @@ URL). Preserve the template's structure verbatim and fill only the prose
 placeholders and obvious tokens from the resolved task. Write the body to the
 ticket via the task source (Jira/GitHub integration), and echo it back.
 
+**Confirm the write persisted.** The Jira/GitHub edit APIs publish immediately —
+there is no separate save step — but always re-fetch the issue after writing and
+confirm the fields hold the new content before reporting done. Note for the
+user: if they had the issue open in the Jira editor while the API wrote, the
+browser keeps a local draft and shows "unsaved changes"; that is a stale
+client-side draft to **discard/refresh**, not a failed save — the server already
+has the published version.
+
 Keep section headings small (`###`, not `##`) so the ticket body doesn't shout.
 
 **Acceptance criteria go in their own fields, not the description.** If the
