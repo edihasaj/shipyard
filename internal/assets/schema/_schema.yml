@@ -34,6 +34,15 @@ commit_convention: conventional   # conventional | jira-prefixed | plain
                                   # conventional  => "feat(scope): msg"
                                   # jira-prefixed => "ABC-123 msg"
 
+worktree:
+  enabled: false                  # true => shipyard creates a detached git worktree
+                                  # from base_branch and runs the agent there.
+                                  # The worktree path is also passed as a
+                                  # SHIPYARD_WORKTREE_PATH=<path> note.
+  root: ~/.shipyard/worktrees     # where generated worktrees are kept.
+                                  # Keep under ~/Projects/farm/worktrees on
+                                  # always-on farm machines if desired.
+
 gates:
   install: ""                     # e.g. "pnpm install" / "uv sync" / "dotnet tool restore"
   lint: ""                        # e.g. "eslint ." / "ruff check"
@@ -61,4 +70,12 @@ push: ask                         # manual | pr | ask
                                   # ask    => summarize, then ask
 
 test_strategy: ""                 # "" or a free-form local smoke strategy
+vmlab:
+  enabled: false                  # true => use vmlab for the optional local smoke.
+  target: ""                      # target name or selector, e.g. "marketing-site", "@web", "dev-mac"
+  flow: ""                        # optional flow YAML path; if empty, use command.
+  command: ""                     # optional shell command for `vmlab run <target> -- ...`
+  web: ""                         # optional abx args for `vmlab web <target> -- ...`
+  gui: ""                         # optional guiport args for `vmlab gui <target> -- ...`
+  evidence: true                  # keep/report vmlab evidence bundle id/path.
 notes: ""                         # anything repo-specific the agent should know

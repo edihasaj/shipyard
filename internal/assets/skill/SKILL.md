@@ -40,11 +40,19 @@ if nothing matches, STOP and ask, and offer to scaffold one (`shipyard init`).
 ## Step 0 — Load config (always first)
 
 Read the repo's config YAML. It defines: `path`, `task_source`, `ticket`,
-`base_branch`, `branch_format`, `branch_types`, `commit_convention`, `gates`,
-`review`, `pr`, `push`, `test_strategy`, `notes`. Everything below is
-parameterized by it.
-`cd` into `path`. Run `git status --short --branch`; if dirty and not on the
-base branch, STOP and ask.
+`base_branch`, `branch_format`, `branch_types`, `commit_convention`,
+`worktree`, `gates`, `review`, `pr`, `push`, `test_strategy`, `vmlab`, `notes`.
+Everything below is parameterized by it.
+
+Default to `cd` into `path`. If the input notes include
+`SHIPYARD_WORKTREE_PATH=<path>`, that path was created by the shipyard launcher;
+use it as the working directory instead of `path`, and do not create another
+worktree. If `worktree.enabled: true` but no launcher-provided path is present,
+create a detached worktree yourself under `worktree.root` from `base_branch`
+before editing, then use that worktree for the rest of the run.
+
+Run `git status --short --branch`; if dirty and not on the base branch or a
+shipyard-created worktree, STOP and ask.
 
 ## Step 1 — Resolve the task
 
@@ -122,6 +130,8 @@ Keep the plan to a short bullet list. Proceed unless the task is ambiguous.
 ## Step 3 — Branch
 
 - `git fetch`; branch FROM a fresh `base_branch` (pull latest first).
+- If running inside a shipyard-created worktree, treat that worktree as already
+  positioned at the fresh base; create the task branch inside the worktree.
 - Name via `branch_format`, substituting `{type}` (per `branch_types`),
   `{key}` (task id, omitted if none), `{slug}` (kebab-case summary, ~6 words).
   Match the config's `branch_examples` exactly. Confirm the name, then create.
@@ -179,12 +189,23 @@ include the task link.
 
 ## Step 9 — Local test (optional, per config)
 
-If `test_strategy` is set, do a real smoke and capture evidence
-(screenshot/log). Never let this BLOCK the pipeline — if the tool/target is
-unreachable, report and continue (Step 5 gates correctness). Strategies are
-free-form per environment (cross-OS runners, desktop/GUI drivers, the app's
-own run command, a browser). Capture proof; don't invent flows that don't
-exist — offer to create one instead.
+If `vmlab.enabled: true`, run the configured vmlab smoke and capture evidence:
+
+- `vmlab.flow` set → `vmlab run <target> <flow>`
+- `vmlab.command` set → `vmlab run <target> -- <command>`
+- `vmlab.web` set → `vmlab web <target> -- <web args>`
+- `vmlab.gui` set → `vmlab gui <target> -- <gui args>`
+
+Use `vmlab.target` as a target name or selector. Record the evidence bundle id
+or path when `vmlab.evidence` is true. If vmlab or the target is unavailable,
+report the exact failure and continue unless the repo config or task explicitly
+made this smoke mandatory.
+
+If `vmlab.enabled` is false but `test_strategy` is set, do the described real
+smoke and capture evidence (screenshot/log). Never let optional local smoke
+silently disappear: either capture proof or say what was unavailable. Step 5
+gates remain the correctness gate. Don't invent flows that don't exist — offer
+to create one instead.
 
 ## Step 10 — Done gate + handoff
 
@@ -203,6 +224,8 @@ assumptions made.
 ## Guardrails
 
 - Never force-push, `reset --hard`, or touch other branches.
+- Never delete a shipyard-created worktree automatically; leave its path in the
+  handoff so the human/farm scheduler can inspect or clean it.
 - Never auto-push repos with `push: manual`.
 - If blocked (missing creds, ambiguous task, unfixable gate), STOP with a
   short list of what's missing — don't band-aid.

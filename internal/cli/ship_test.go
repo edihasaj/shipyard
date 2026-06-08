@@ -127,6 +127,40 @@ func TestHeadlessFlag(t *testing.T) {
 	}
 }
 
+func TestWorktreeRunsAgentInGeneratedWorktree(t *testing.T) {
+	bin := buildBinary(t)
+	home := t.TempDir()
+	repo := initGitRepo(t)
+	root := filepath.Join(t.TempDir(), "worktrees")
+	reposDir := filepath.Join(home, "repos")
+	if err := os.MkdirAll(reposDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	cfg := "key: testrepo\npath: " + repo + "\n" +
+		"base_branch: main\nbranch_format: \"{type}/{slug}\"\n" +
+		"worktree:\n  enabled: true\n  root: " + root + "\n" +
+		"push: ask\n"
+	if err := os.WriteFile(filepath.Join(reposDir, "testrepo.yml"), []byte(cfg), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	log := filepath.Join(t.TempDir(), "agent.log")
+	agent := fakeAgent(t, log)
+
+	if _, err := run(t, bin, home, agent, "testrepo", "fix browser smoke"); err != nil {
+		t.Fatalf("run failed: %v", err)
+	}
+	s := readFile(t, log)
+	if strings.Contains(s, "CWD="+repo) {
+		t.Fatalf("agent ran in source repo, not worktree:\n%s", s)
+	}
+	if !strings.Contains(s, "CWD="+root) {
+		t.Errorf("agent cwd did not point under worktree root:\n%s", s)
+	}
+	if !strings.Contains(s, "SHIPYARD_WORKTREE_PATH=") {
+		t.Errorf("prompt did not include worktree path note:\n%s", s)
+	}
+}
+
 // Non-claude agents have no ship-task skill, so the generic profile must inline
 // the whole pipeline (SKILL.md) plus the task inputs into the prompt.
 func TestGenericProfileInlinesSkill(t *testing.T) {
@@ -170,6 +204,27 @@ func readFile(t *testing.T, p string) string {
 		t.Fatal(err)
 	}
 	return string(b)
+}
+
+func initGitRepo(t *testing.T) string {
+	t.Helper()
+	repo := t.TempDir()
+	runGitForTest(t, repo, "init", "-b", "main")
+	if err := os.WriteFile(filepath.Join(repo, "README.md"), []byte("# test\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	runGitForTest(t, repo, "add", "README.md")
+	runGitForTest(t, repo, "-c", "user.name=Shipyard Test", "-c", "user.email=shipyard@example.com", "commit", "-m", "init")
+	return repo
+}
+
+func runGitForTest(t *testing.T, dir string, args ...string) {
+	t.Helper()
+	cmd := exec.Command("git", append([]string{"-C", dir}, args...)...)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("git %s failed: %v\n%s", strings.Join(args, " "), err, out)
+	}
 }
 
 func TestUnknownRepoFails(t *testing.T) {

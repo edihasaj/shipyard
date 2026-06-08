@@ -12,9 +12,9 @@ import (
 )
 
 // Home returns the directory holding repo configs, resolved in this order:
-//   1. $SHIPYARD_HOME
-//   2. ./.shipyard  (repo-local, if present)
-//   3. $XDG_CONFIG_HOME/shipyard  (or ~/.config/shipyard)
+//  1. $SHIPYARD_HOME
+//  2. ./.shipyard  (repo-local, if present)
+//  3. $XDG_CONFIG_HOME/shipyard  (or ~/.config/shipyard)
 func Home() string {
 	if h := os.Getenv("SHIPYARD_HOME"); h != "" {
 		return expand(h)
@@ -37,20 +37,34 @@ func ReposDir() string { return filepath.Join(Home(), "repos") }
 // Config is one managed repo. Fields mirror repos/_schema.yml. Only what the
 // launcher needs is typed strongly; the skill reads the rest of the YAML itself.
 type Config struct {
-	Key    string `yaml:"key"`
-	Path   string `yaml:"path"`
-	GitHub struct {
+	Key        string `yaml:"key"`
+	Path       string `yaml:"path"`
+	BaseBranch string `yaml:"base_branch"`
+	GitHub     struct {
 		Repo string `yaml:"repo"`
 	} `yaml:"github"`
 	Jira struct {
 		ProjectKey string `yaml:"project_key"`
 	} `yaml:"jira"`
+	Worktree struct {
+		Enabled bool   `yaml:"enabled"`
+		Root    string `yaml:"root"`
+	} `yaml:"worktree"`
 
 	file string // source path, for diagnostics
 }
 
 // ResolvedPath returns Path with a leading ~ expanded.
 func (c *Config) ResolvedPath() string { return expand(c.Path) }
+
+// WorktreeRoot returns the configured worktree root with a leading ~ expanded.
+func (c *Config) WorktreeRoot() string {
+	if c.Worktree.Root != "" {
+		return expand(c.Worktree.Root)
+	}
+	home, _ := os.UserHomeDir()
+	return filepath.Join(home, ".shipyard", "worktrees")
+}
 
 // Load reads a single config by key.
 func Load(key string) (*Config, error) {

@@ -95,6 +95,13 @@ gates:
   lint: "pnpm lint"
   typecheck: "tsc --noEmit"
   test: "pnpm test"
+worktree:
+  enabled: true
+  root: ~/Projects/farm/worktrees
+vmlab:
+  enabled: true
+  target: marketing-site
+  web: "goto http://localhost:3000 && screenshot /tmp/site.png"
 review: { security: true, level: high }
 pr: { base: main, draft: false }
 push: ask              # manual | pr | ask
@@ -139,6 +146,17 @@ Or, inside an agent session already in the repo: `/ship-task my-app ABC-123`.
   enterprise repos where you push by hand.
 - `push: ask` — summarizes, then asks.
 - `push: pr` — pushes and opens the PR automatically.
+
+## Worktrees and vmlab
+
+For farm-style concurrency, enable `worktree.enabled`. shipyard creates a
+detached git worktree from `base_branch`, runs the agent inside it, and passes
+`SHIPYARD_WORKTREE_PATH=<path>` in the task notes so the bundled skill keeps all
+edits in that worktree. Worktrees are left in place for inspection/cleanup.
+
+For real smoke tests, set `vmlab.enabled` and one of `flow`, `command`, `web`,
+or `gui`. The skill runs the matching `vmlab` command after the normal gates and
+reports the evidence bundle/path when available.
 
 ## Commands
 
