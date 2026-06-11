@@ -43,14 +43,35 @@ func TestPromptSlashVsInlined(t *testing.T) {
 
 func TestArgvPrintModes(t *testing.T) {
 	claude, _ := ProfileByName("claude")
-	if got := claude.Argv("X", true); len(got) != 4 || got[0] != "-p" || got[3] != "acceptEdits" {
+	// headless: -p <prompt> --permission-mode acceptEdits --allowedTools <rules>
+	if got := claude.Argv("X", true); len(got) != 6 || got[0] != "-p" ||
+		got[3] != "acceptEdits" || got[4] != "--allowedTools" || got[5] != "Bash(git:*)" {
 		t.Errorf("claude print argv = %v", got)
 	}
 	if got := claude.Argv("X", false); len(got) != 1 || got[0] != "X" {
 		t.Errorf("claude interactive argv = %v", got)
 	}
 	codex, _ := ProfileByName("codex")
-	if got := codex.Argv("X", true); len(got) != 2 || got[0] != "exec" {
+	// headless: exec --sandbox <mode> -- <prompt>
+	if got := codex.Argv("X", true); len(got) != 5 || got[0] != "exec" ||
+		got[1] != "--sandbox" || got[2] != "workspace-write" || got[3] != "--" || got[4] != "X" {
 		t.Errorf("codex print argv = %v", got)
+	}
+	// interactive: -- <prompt> (guards leading "---" of an inlined skill)
+	if got := codex.Argv("X", false); len(got) != 2 || got[0] != "--" || got[1] != "X" {
+		t.Errorf("codex interactive argv = %v", got)
+	}
+}
+
+func TestHeadlessOverridesViaEnv(t *testing.T) {
+	t.Setenv("SHIPYARD_HEADLESS_ALLOWED", "Bash(git:*),Bash(pnpm test:*)")
+	t.Setenv("SHIPYARD_CODEX_SANDBOX", "danger-full-access")
+	claude, _ := ProfileByName("claude")
+	if got := claude.Argv("X", true); got[5] != "Bash(git:*),Bash(pnpm test:*)" {
+		t.Errorf("claude allowedTools override = %v", got)
+	}
+	codex, _ := ProfileByName("codex")
+	if got := codex.Argv("X", true); got[2] != "danger-full-access" {
+		t.Errorf("codex sandbox override = %v", got)
 	}
 }
