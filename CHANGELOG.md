@@ -6,6 +6,19 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- Headless agents can now actually write the repo. `acceptEdits` alone still
+  denied bash, so a `--print`/`--headless` claude run stalled before it could
+  branch or commit; the claude profile now passes
+  `--allowedTools "Bash(git:*)"` (override via `SHIPYARD_HEADLESS_ALLOWED`,
+  e.g. to add gate commands).
+- `codex` headless runs now write files and parse correctly: `codex exec`
+  sandboxes to read-only by default (couldn't touch the repo) — the profile
+  now passes `--sandbox workspace-write` (override via
+  `SHIPYARD_CODEX_SANDBOX`) — and a `--` end-of-options guard stops codex's
+  arg parser from reading the inlined skill's leading `---` front matter as a
+  flag (both headless and interactive).
+
 ## [0.2.0] - 2026-06-03
 
 ### Added
