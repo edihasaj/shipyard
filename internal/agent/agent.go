@@ -9,12 +9,22 @@
 package agent
 
 import (
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 
 	"github.com/edihasaj/shipyard/internal/assets"
 )
+
+// envOr returns $key, or def when unset/empty. Lets headless defaults below be
+// overridden without changing the Argv signature.
+func envOr(key, def string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return def
+}
 
 // Profile describes how to drive one agent CLI.
 type Profile struct {
@@ -31,21 +41,31 @@ type Profile struct {
 func positional(prompt string) []string { return []string{prompt} }
 
 var profiles = map[string]Profile{
-	// Claude Code: slash command + headless flags.
+	// Claude Code: slash command + headless flags. acceptEdits still denies
+	// bash, so a headless run can't branch/commit; pre-allow git (override via
+	// SHIPYARD_HEADLESS_ALLOWED, e.g. to add gate commands).
 	"claude": {
 		Name:            "claude",
 		SlashCommand:    true,
 		interactiveArgs: positional,
 		printArgs: func(p string) []string {
-			return []string{"-p", p, "--permission-mode", "acceptEdits"}
+			allowed := envOr("SHIPYARD_HEADLESS_ALLOWED", "Bash(git:*)")
+			return []string{"-p", p, "--permission-mode", "acceptEdits", "--allowedTools", allowed}
 		},
 	},
 	// OpenAI Codex CLI: `codex "<prompt>"` interactive, `codex exec` headless.
+	// `codex exec` sandboxes to read-only by default, so let it write the repo
+	// (override via SHIPYARD_CODEX_SANDBOX: read-only|workspace-write|
+	// danger-full-access). A `--` guards prompts that start with "---" (the
+	// inlined skill's YAML front matter) from codex's arg parser.
 	"codex": {
 		Name:            "codex",
 		SlashCommand:    false,
-		interactiveArgs: positional,
-		printArgs:       func(p string) []string { return []string{"exec", p} },
+		interactiveArgs: func(p string) []string { return []string{"--", p} },
+		printArgs: func(p string) []string {
+			sandbox := envOr("SHIPYARD_CODEX_SANDBOX", "workspace-write")
+			return []string{"exec", "--sandbox", sandbox, "--", p}
+		},
 	},
 	// Fallback: pass the prompt as a single positional argument. Works for any
 	// agent CLI whose first positional arg is the instruction.
