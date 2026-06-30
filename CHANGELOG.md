@@ -6,7 +6,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-06-30
+
 ### Fixed
+- PR description is no longer dropped when a `pr.template` is set. Step 10
+  (`push: pr`) now passes the body file explicitly to `gh pr create`
+  (`--body-file /tmp/<key>-pr.md`) with a hard "never without `--body-file`"
+  guard, and Step 8 clarifies that a configured template is a skeleton to fill,
+  not a reason to skip writing the body.
 - Headless agents can now actually write the repo. `acceptEdits` alone still
   denied bash, so a `--print`/`--headless` claude run stalled before it could
   branch or commit; the claude profile now passes
