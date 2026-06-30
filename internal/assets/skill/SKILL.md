@@ -187,6 +187,11 @@ placeholders (the `_italic prompts_`) and obvious tokens (e.g. `<TICKET-ID>`)
 from the resolved task. Leave checkboxes unchecked for the human. Always
 include the task link.
 
+**Always write the filled body to the file** — a configured `pr.template` is a
+skeleton to fill, never a reason to skip writing the description. Whoever opens
+the PR (the agent on `push: pr`, or the human on `push: manual`) takes the body
+from `/tmp/<key-or-slug>-pr.md`, so the PR must never be opened without it.
+
 ## Step 9 — Local test (optional, per config)
 
 If `vmlab.enabled: true`, run the configured vmlab smoke and capture evidence:
@@ -214,8 +219,11 @@ Then act on `push`:
 - `push: manual` (enterprise) → **do NOT push or open a PR.** Output: branch
   name, one-paragraph summary, gate results, security/review summary, PR-body
   path, open questions. The human reviews and pushes.
-- `push: pr` → push branch, `gh pr create` against `pr.base` with the Step 8
-  body, draft if `pr.draft`. Print the PR URL.
+- `push: pr` → push branch, then open the PR **passing the Step 8 body file
+  explicitly**: `gh pr create --base <pr.base> --title "<key>: <summary>"
+  --body-file /tmp/<key-or-slug>-pr.md` (add `--draft` if `pr.draft`). **Never
+  run `gh pr create` without `--body-file`** — omitting it drops the
+  description/template entirely. Print the PR URL.
 - `push: ask` → present the summary, then ask before pushing.
 
 Final message = a tight status block, not prose. Leave a breadcrumb of any
